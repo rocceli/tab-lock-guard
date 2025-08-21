@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SecureTab</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 350px;
+      min-height: 400px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(180deg, hsl(225 15% 12%) 0%, hsl(225 15% 10%) 100%);
+      color: hsl(210 40% 95%);
+    }
+    
+    .popup-container {
+      padding: 20px;
+    }
+    
+    .popup-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .popup-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, hsl(217 91% 55%) 0%, hsl(142 76% 36%) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px hsl(217 91% 55% / 0.3);
+    }
+    
+    .popup-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: hsl(210 40% 95%);
+    }
+    
+    .popup-subtitle {
+      font-size: 12px;
+      color: hsl(217 10% 65%);
+    }
+    
+    .status-card {
+      background: hsl(225 15% 16%);
+      border: 1px solid hsl(225 15% 20%);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .status-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .status-label {
+      font-size: 13px;
+      color: hsl(217 10% 65%);
+    }
+    
+    .status-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(210 40% 95%);
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+    
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: hsl(142 76% 36%);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, hsl(217 91% 55%) 0%, hsl(142 76% 36%) 100%);
+      color: hsl(220 15% 8%);
+      box-shadow: 0 0 15px hsl(217 91% 55% / 0.3);
+    }
+    
+    .btn-secondary {
+      background: hsl(225 15% 16%);
+      color: hsl(210 40% 95%);
+      border: 1px solid hsl(225 15% 20%);
+    }
+    
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .setup-prompt {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .setup-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: hsl(225 15% 16%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: hsl(217 91% 55%);
+    }
+    
+    .setup-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: hsl(210 40% 95%);
+    }
+    
+    .setup-description {
+      font-size: 12px;
+      color: hsl(217 10% 65%);
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-container">
+    <div class="popup-header">
+      <div class="popup-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="popup-title">SecureTab</div>
+        <div class="popup-subtitle">Security Extension</div>
+      </div>
+    </div>
+    
+    <div id="popup-content">
+      <!-- Content will be populated by popup.js -->
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
