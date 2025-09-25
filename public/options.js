@@ -186,14 +186,6 @@ class OptionsManager {
               <h3>Auto-Lock</h3>
             </div>
             <p class="card-description">Locks after ${this.settings.timeoutMinutes} minutes of inactivity</p>
-            <button id="lock-now-btn" class="btn-outline">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-                <circle cx="12" cy="16" r="1" fill="currentColor"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              Lock Now
-            </button>
           </div>
           
           <div class="status-card">
@@ -916,16 +908,6 @@ class OptionsManager {
       this.render();
     });
     
-    document.getElementById('lock-now-btn').addEventListener('click', async () => {
-      try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        await chrome.tabs.sendMessage(tab.id, { type: 'LOCK_TAB' });
-        this.showNotification('Current tab locked successfully!', 'success');
-      } catch (error) {
-        console.error('Error locking tab:', error);
-        this.showNotification('Failed to lock tab', 'error');
-      }
-    });
   }
   
   setupSettingsListeners() {

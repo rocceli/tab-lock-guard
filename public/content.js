@@ -5,30 +5,133 @@ class SecureTabContent {
     this.lockOverlay = null;
     this.activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
     this.lastActivity = Date.now();
+    this.contextInvalidated = false;
+    this.messageQueue = [];
     
     this.init();
   }
   
   init() {
+    console.log('SecureTab content script initialized on:', window.location.href);
     this.setupActivityListeners();
     this.setupMessageListeners();
     this.checkInitialLockStatus();
+    this.setupContextRecovery();
+  }
+  
+  setupContextRecovery() {
+    // Attempt context recovery every 30 seconds if context is invalidated
+    setInterval(async () => {
+      if (this.contextInvalidated) {
+        await this.attemptContextRecovery();
+      }
+    }, 30000);
+  }
+  
+  // Helper method to safely send messages to background script
+  async safeSendMessage(message) {
+    if (this.contextInvalidated) {
+      console.log('Context invalidated, not sending message:', message.type);
+      return { success: false, error: 'Extension context invalidated' };
+    }
+    
+    try {
+      return await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(message, (response) => {
+          if (chrome.runtime.lastError) {
+            const errorMsg = chrome.runtime.lastError.message || '';
+            if (errorMsg.includes('Extension context invalidated') || 
+                errorMsg.includes('The message port closed') ||
+                errorMsg.includes('Receiving end does not exist')) {
+              console.log('Extension context invalidated, marking as invalid:', errorMsg);
+              this.contextInvalidated = true;
+              resolve({ success: false, error: 'Extension context invalidated' });
+            } else {
+              reject(chrome.runtime.lastError);
+            }
+          } else {
+            resolve(response);
+          }
+        });
+      });
+    } catch (error) {
+      console.warn('Failed to send message:', error);
+      console.warn('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      return { success: false, error: error.message || 'Unknown error' };
+    }
+  }
+  
+  // Method to attempt context recovery
+  async attemptContextRecovery() {
+    if (!this.contextInvalidated) return true;
+    
+    console.log('Attempting context recovery...');
+    try {
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: 'PING' }, (response) => {
+          if (chrome.runtime.lastError) {
+            const errorMsg = chrome.runtime.lastError.message || '';
+            if (errorMsg.includes('Extension context invalidated') || 
+                errorMsg.includes('The message port closed') ||
+                errorMsg.includes('Receiving end does not exist')) {
+              reject(new Error('Context still invalidated'));
+            } else {
+              reject(chrome.runtime.lastError);
+            }
+          } else {
+            resolve(response);
+          }
+        });
+      });
+      
+      console.log('Context recovery successful');
+      this.contextInvalidated = false;
+      return true;
+    } catch (error) {
+      console.log('Context recovery failed:', error.message || error);
+      return false;
+    }
   }
   
   setupActivityListeners() {
-    // Throttled activity detection
+    // Throttled activity detection with longer intervals to reduce context invalidation
     let activityTimeout;
+    let lastReportedActivity = 0;
+    const THROTTLE_INTERVAL = 2000; // Increased to 2 seconds to reduce message frequency
+    
     const reportActivity = () => {
-      this.lastActivity = Date.now();
+      const now = Date.now();
+      this.lastActivity = now;
       
-      clearTimeout(activityTimeout);
-      activityTimeout = setTimeout(() => {
-        chrome.runtime.sendMessage({ type: 'ACTIVITY_DETECTED' });
-      }, 1000); // Throttle to once per second
+      // Only report activity if enough time has passed since last report and context is valid
+      if (now - lastReportedActivity >= THROTTLE_INTERVAL && !this.contextInvalidated) {
+        clearTimeout(activityTimeout);
+        activityTimeout = setTimeout(async () => {
+          // Double-check context is still valid before sending
+          if (!this.contextInvalidated) {
+            const response = await this.safeSendMessage({ type: 'ACTIVITY_DETECTED' });
+            if (response.success) {
+              lastReportedActivity = Date.now();
+            }
+          }
+        }, 500); // Increased delay to batch events better
+      }
     };
     
     this.activityEvents.forEach(event => {
       document.addEventListener(event, reportActivity, { passive: true });
+    });
+    
+    // Also listen for visibility changes to handle tab switching
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        // Tab became visible, report activity
+        reportActivity();
+      }
     });
   }
   
@@ -37,11 +140,15 @@ class SecureTabContent {
     window.addEventListener('message', (event) => {
       if (event.source !== window) return;
       
+      console.log('Content script received window message:', event.data);
+      
       switch (event.data.type) {
         case 'SECURETAB_LOCK':
+          console.log('Received SECURETAB_LOCK message, showing overlay');
           this.showLockOverlay();
           break;
         case 'SECURETAB_UNLOCK':
+          console.log('Received SECURETAB_UNLOCK message, hiding overlay');
           this.hideLockOverlay();
           break;
       }
@@ -49,11 +156,15 @@ class SecureTabContent {
     
     // Listen for runtime messages
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      console.log('Content script received runtime message:', message);
+      
       switch (message.type) {
         case 'LOCK_TAB':
+          console.log('Received LOCK_TAB runtime message, showing overlay');
           this.showLockOverlay();
           break;
         case 'UNLOCK_TAB':
+          console.log('Received UNLOCK_TAB runtime message, hiding overlay');
           this.hideLockOverlay();
           break;
       }
@@ -61,13 +172,9 @@ class SecureTabContent {
   }
   
   async checkInitialLockStatus() {
-    try {
-      const response = await chrome.runtime.sendMessage({ type: 'CHECK_LOCK_STATUS' });
-      if (response && response.isLocked) {
-        this.showLockOverlay();
-      }
-    } catch (error) {
-      console.log('Could not check lock status:', error);
+    const response = await this.safeSendMessage({ type: 'CHECK_LOCK_STATUS' });
+    if (response && response.isLocked) {
+      this.showLockOverlay();
     }
   }
   
@@ -131,37 +238,34 @@ class SecureTabContent {
       const password = passwordInput.value;
       if (!password) return;
       
-      try {
-        const response = await chrome.runtime.sendMessage({
-          type: 'UNLOCK_TAB',
-          password: password
-        });
+      const response = await this.safeSendMessage({
+        type: 'UNLOCK_TAB',
+        password: password
+      });
+      
+      if (response && response.success) {
+        this.hideLockOverlay();
+      } else {
+        attempts++;
+        passwordInput.value = '';
         
-        if (response && response.success) {
-          this.hideLockOverlay();
-        } else {
-          attempts++;
-          passwordInput.value = '';
+        if (response.error === 'Extension context invalidated') {
+          errorDiv.textContent = 'Extension context invalidated. Please reload the page and try again.';
+          errorDiv.style.display = 'block';
+        } else if (attempts >= maxAttempts) {
+          errorDiv.textContent = `Too many failed attempts. Extension locked for 30 seconds.`;
+          errorDiv.style.display = 'block';
+          form.style.pointerEvents = 'none';
           
-          if (attempts >= maxAttempts) {
-            errorDiv.textContent = `Too many failed attempts. Extension locked for 30 seconds.`;
-            errorDiv.style.display = 'block';
-            form.style.pointerEvents = 'none';
-            
-            setTimeout(() => {
-              attempts = 0;
-              errorDiv.style.display = 'none';
-              form.style.pointerEvents = '';
-            }, 30000);
-          } else {
-            errorDiv.textContent = `Incorrect password. ${maxAttempts - attempts} attempts remaining.`;
-            errorDiv.style.display = 'block';
-          }
+          setTimeout(() => {
+            attempts = 0;
+            errorDiv.style.display = 'none';
+            form.style.pointerEvents = '';
+          }, 30000);
+        } else {
+          errorDiv.textContent = `Incorrect password. ${maxAttempts - attempts} attempts remaining.`;
+          errorDiv.style.display = 'block';
         }
-      } catch (error) {
-        console.error('Error unlocking tab:', error);
-        errorDiv.textContent = 'Error occurred. Please try again.';
-        errorDiv.style.display = 'block';
       }
     });
   }

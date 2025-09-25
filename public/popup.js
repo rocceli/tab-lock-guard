@@ -136,10 +136,22 @@ class PopupManager {
   async lockCurrentTab() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      await chrome.runtime.sendMessage({ type: 'LOCK_TAB' });
       
-      // Close popup
-      window.close();
+      // Send message to background script to lock the specific tab
+      const response = await chrome.runtime.sendMessage({ 
+        type: 'LOCK_TAB_REQUEST', 
+        tabId: tab.id 
+      });
+      
+      if (response && response.success) {
+        // Close popup after successful lock
+        window.close();
+      } else {
+        const errorMsg = response?.error || 'Unknown error';
+        console.error('Failed to lock tab:', errorMsg);
+        // Show user-friendly error message
+        alert(`Failed to lock tab: ${errorMsg}`);
+      }
     } catch (error) {
       console.error('Error locking tab:', error);
     }
