@@ -1,73 +1,47 @@
-# Welcome to your Lovable project
+🔒 SecureTab – Privacy Lock for Browser Tabs
 
-## Project info
+SecureTab is a lightweight browser extension that automatically locks your tabs when they are not in view, protecting your sensitive information from shoulder surfing, screen sharing, or leaving your computer unattended.
 
-**URL**: https://lovable.dev/projects/2fed1b8d-2440-4320-9196-c92361d39935
+✨ Features
 
-## How can I edit this code?
+🔐 Auto-lock tabs when they lose focus or the browser window is minimized.
+![Screenshot of locked tab](/public/img/auto.png)
 
-There are several ways of editing your application.
+🧑‍💻 Unlock with password or PIN to resume your session.
+![Screenshot of locked tab](/public/img/unlock.png)
 
-**Use Lovable**
+⚡ Instant protection – content hidden immediately when switching tabs.
+![Screenshot of locked tab](/public/img/setup.png)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/2fed1b8d-2440-4320-9196-c92361d39935) and start prompting.
+🌐 (Chromium-based browsers).
 
-Changes made via Lovable will be committed automatically to this repo.
+🎨 Customizable settings for lock timeout, password strength, and themes.
 
-**Use your preferred IDE**
+📦 Installation
+Chrome  (Chromium)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Clone or download this repo.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Go to chrome://extensions/.
 
-Follow these steps:
+Enable Developer Mode (top right).
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Click Load unpacked and select the project folder.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+🛠 Usage
 
-# Step 3: Install the necessary dependencies.
-npm i
+Open a sensitive tab (e.g., work dashboard, private mail, financial site).
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+When you switch away from the tab or minimize the browser, SecureTab locks it.
 
-**Edit a file directly in GitHub**
+Returning to the tab prompts you for your unlock key (PIN/password).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Enter the key to unlock and continue where you left off.
 
-**Use GitHub Codespaces**
+⚙️ Configuration
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Lock Timeout → Choose immediate lock or after a delay.
 
-## What technologies are used for this project?
+Unlock Method → Set a password or PIN.
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/2fed1b8d-2440-4320-9196-c92361d39935) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Auto-lock on Inactivity → Tabs lock after X minutes of inactivity.
